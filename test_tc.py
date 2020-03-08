@@ -52,8 +52,6 @@ class Test(TestCase):
         expected_result = [(1, 2), (2, 2), (3, 2), (4, 1)]
         self.assertEqual(expected_result, result)
 
-
-
     def test_plot(self):
         """This function tests whether the plot actually plots the input coordinates.
                                       """

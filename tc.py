@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 def csv_reader(csv_filename):
-    """This function reads CSV files.
+    """This function reads CSV files containing killMaps.
 
         Parameters:
             csv_filename (Path): The killmap passed in as a CSV file.
@@ -129,8 +129,8 @@ def dominator_setter(sorted_weight, completeness):
 def dominator_export(sorted_weight_non_duplicate):
     """This function writes a CSV file.
 
-            Parameters:
-                sorted_weight_non_duplicate: A minimal list of mutants as tuples that maps mutants to the number of
+    Parameters:
+        sorted_weight_non_duplicate: A minimal list of mutants as tuples that maps mutants to the number of
         unique tests they kill
 
                     """
@@ -169,6 +169,7 @@ if __name__ == "__main__":
     unsorted_weights_main = kill_count(completeness_main)
     test_sorted_weight_main = sorter(unsorted_weights_main)
     dominator_set_main = dominator_setter(test_sorted_weight_main, completeness_main)
+    print(dominator_set_main)
     test_completeness_main = duplicate_remover(dominator_set_main)
     dominator_export(sorted_weight_non_duplicate)
     plot(test_completeness_main, sorted_weight_non_duplicate, tests_explored)
