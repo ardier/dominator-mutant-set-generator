@@ -128,11 +128,12 @@ class Node:
                     if relationship == "child" and relative.tests.issubset(
                             new_node.tests):
                         relationship_possibility_with_relatives = True
-                        # adding new_node as a child of self's child
+                        # adding new_node as a relative of self's child
                         relative.add_relation(new_node, graph, "child")
                     elif relationship == "parent" and relative.tests.issuperset(
                             new_node.tests):
                         relationship_possibility_with_relatives = True
+                        # adding new_node as a relative of self's parent
                         relative.add_relation(new_node, graph, "parent")
                     else:
                         if relationship == "child":
