@@ -1,56 +1,46 @@
+from typing import Optional, Set
+
+
 class Node:
+    tests: Optional[Set[int]]
+    mutant_name: Optional[Set[int]]
+    children: Optional[Set[int]]
+    parents: Optional[Set[int]]
     """The node object that represents mutants
 
     Parameters:
-        mutant_name: set()
+        mutant_name: set[int]
             The mutant's identifier is stored as a set so that when two
             indistinguishable mutants are merged, their name could easily
             be merged (default None).
-        tests: set()
+        tests: set[int]
             A set of test identifiers that fail for the mutant represented by
             this node (default None).
-        children: set()
+        children: set[int]
             A set of mutant identifiers that represent mutants that are
             killed by a superset of tests that kill the mutant represented
             by this node (default None).
-        parents: set()
+        parents: set[int]
             A set of mutant identifiers that represent mutants that are
             killed by a subset of tests that kill the mutant represented by
             this node (default None).
 
     Attributes:
-        self.mutant_name: set()
+        self.mutant_name: set[int]
             The mutant's identifier is stored as a set so that when two
             indistinguishable mutants are merged their name could easily
             merged (default None)
-        self.tests: set()
+        self.tests: set[int]
             A set of test identifiers that fail for the mutant represented
             by this node (default None)
-        self.children: set()
+        self.children: set[int]
             A set of mutant identifiers that represent mutants that are
             killed by a superset of tests that kill the mutant represented
             by this node (default None).
-        self.parents: set()
+        self.parents: set[int]
             A set of mutant identifiers that represent mutants that are
             killed by a subset of tests that kill the mutant represented by
             this node (default None)..
-
-    Methods:
-        add_relation(self, new_node, graph)
-            Creates a relation between self which is node already
-            existing in graph object and the new_node
-        add_children(self, new_node, graph)
-            Adds new_node as self's child. Assumes the children
-            aren't the same and are distinguishable
-        add_parents(self, new_node, graph)
-            Adds new_node as self's child. Assumes the children
-            aren't the same and are distinguishable
-        is_distinguishable_from(self, n2)
-            Determines whether the mutants represented by
-            two nodes are distinguishable
-        merge_indistinguishable_nodes(self, n2, graph)
-            Merges two indistinguishable mutants.
-            Assumes they are indistinguishable.
 
     """
 
@@ -61,108 +51,135 @@ class Node:
         self.children = children
         self.parents = parents
 
-    def add_relation(self, new_node, graph, relationship="unknown"):
-        """Adds a relation between an existing node in the graph and a new node.
+    def place_mutant_in_graph(self, new_node, graph, relationship="unknown"):
+
+        """Places new_node relative to this node in the graph.
+
         Assumes that the nodes that are passed in are related.
         If empty, it initiates parents and children member variables as
-        empty sets for self and new_node. Checks whether self and new_node
-        are distinguishable nodes, and if they are, it relates them recursively.
+        empty sets for this node and new_node.
+
+        Checks whether this node and new_node are distinguishable nodes, and if
+        they are, it relates them recursively.
         If there are no possible nodes in between the two given nodes,
         then they become related as using their child/parent identifiers.
+
         Otherwise, it compares all the test identifiers for all the nodes in
-        children/parents of self.
-        If there exists another node between self and new_node whose tests are
-        a subset of self/new_node and the superset of the other one,
-        add_relation then recursively adds new_node to that node.
+        children/parents of this node.
+
+        If there exists another node between this node and new_node whose
+        tests are a subset of this node/new_node and the superset of the other
+        one, place_mutant_in_graph then recursively adds new_node to that node.
 
         Parameters:
-            self: Node
-                A node representing a mutant that already exists on the graph
             new_node: Node
                 A new node representing a mutant that is being added to the the
                 graph
             graph: Graph
                 A graph containing nodes that represent mutants
             relationship : str
-                A string that indicates the kind of relationship being added
+                A string that indicates the kind of relationship being added.
+                Possible inputs are"subsumed", "dominant", or "unknown".
                 (default = unknown)
 
             """
-
-        if self.children is None:
+        # TODO figure out why the program break when we delete this chunk of
+        #  code
+        if self.children == None:
             self.children = set()
-        if self.parents is None:
+        if self.parents == None:
             self.parents = set()
-        if new_node.children is None:
+        if new_node.children == None:
             new_node.children = set()
-        if new_node.parents is None:
+        if new_node.parents == None:
             new_node.parents = set()
 
         if not self.is_distinguishable_from(new_node):
             if not self == new_node:
                 self.merge_indistinguishable_nodes(new_node, graph)
+
         else:
-            if relationship == "child" or self.tests.issubset(new_node.tests):
-                relationship = "child"
-                self.relation = self.children
-                new_node.relation_1 = new_node.parents
-                new_node.relation_2 = new_node.children
-            else:
-                relationship = "parent"
-                self.relation = self.parents
-                new_node.relation_1 = new_node.children
-                new_node.relation_2 = new_node.parents
+            relation, relationship = self.build_relation_list(new_node,
+                                                              relationship)
 
             relationship_possibility_with_relatives = False
-            if self.relation is set():
-                new_node.relation_1.add(self)
-                self.relation.add(new_node)
+            if relation[0] == set():
+                relation[3].add_children(relation[4])
                 relationship_possibility_with_relatives = True
 
-            elif self.relation is not None and new_node not in self.relation:
-                for relative in self.relation.copy():
-                    if relationship == "child":
-                        relation_edges = relative.parents
+            elif relation[0] != None and new_node not in relation[0]:
+                relationship_possibility_with_relatives = True
+                for relative in relation[0]:
+                    if relationship == "subsumed":
+                        relation.append(relative.parents)
                     else:
-                        relation_edges = relative.children
-                    if relationship == "child" and relative.tests.issubset(
+                        relation.append(relative.children)
+
+                    if relationship == "subsumed" and relative.tests.issubset(
                             new_node.tests):
-                        relationship_possibility_with_relatives = True
+
                         # adding new_node as a relative of self's child
-                        relative.add_relation(new_node, graph, "child")
-                    elif relationship == "parent" and relative.tests.issuperset(
+                        relative.place_mutant_in_graph(new_node, graph,
+                                                       "subsumed")
+
+                    elif relative.tests.issuperset(
                             new_node.tests):
-                        relationship_possibility_with_relatives = True
                         # adding new_node as a relative of self's parent
-                        relative.add_relation(new_node, graph, "parent")
+                        relative.place_mutant_in_graph(new_node, graph,
+                                                       "dominant")
+
                     else:
-                        if relationship == "child":
-                            if new_node.tests.issubset(relative.tests):
-                                new_node.relation_2.add(relative)
-                        else:
-                            if new_node.tests.issuperset(relative.tests):
-                                new_node.relation_2.add(relative)
-                        new_node.relation_1.add(self)
-                        self.relation.add(new_node)
-                        self.relation.remove(relative)
-                        relation_edges.add(new_node)
-                        relation_edges.remove(self)
+                        self.add_children_in_between(new_node, relation,
+                                                     relative)
 
             if relationship_possibility_with_relatives is False:
-                new_node.relation_1.add(self)
-                self.relation.add(new_node)
+                relation[3].add_children(relation[4])
+
+    def add_children(self, new_node):
+        self.children.add(new_node)
+        new_node.parents.add(self)
+
+    def add_children_in_between(self, new_node, relation, relative):
+        relation[2].add(relative)
+        relation[1].add(self)
+        relation[0].add(new_node)
+        relation[0].remove(relative)
+        relation[5].add(new_node)
+        relation[5].remove(self)
+
+    def build_relation_list(self, new_node, relationship):
+        relation = list()
+        if self.tests.issubset(
+                new_node.tests):
+            relationship = "subsumed"
+            relation.append(self.children)
+            relation.append(new_node.parents)
+            relation.append(new_node.children)
+            relation.append(self)
+            relation.append(new_node)
+
+        else:
+            relationship = "dominant"
+            relation.append(self.parents)
+            relation.append(new_node.children)
+            relation.append(new_node.parents)
+            relation.append(new_node)
+            relation.append(self)
+
+        return relation, relationship
 
     def merge_indistinguishable_nodes(self, n2, graph):
         """Merges two nodes that represent mutants in a given graph.
-        It renames self to include the n2's identifier by union-ing the sets
-        containing each node's identifier. It adds the second node to
-        graph.indistinguishable, which is a member variable of graph.
-        graph.indistinguishable is a list of indistinguishable nodes
-        that will be removed later by graph.connect_node().
+
+        It renames this node to include the n2's identifier by union-ing the
+        sets containing each node's identifier.
+
+        It adds the second node to graph.indistinguishable, which is a member
+        variable of graph. graph.indistinguishable is a list of
+        indistinguishable nodes that will be removed later by
+        graph.connect_node().
 
         Parameters:
-            self: Node
-                First mutant
             n2: Node
                 Second mutant
             graph: Graph
@@ -179,45 +196,27 @@ class Node:
 
 
         Parameters:
-            self: Node
-                First mutant being compared
             n2: Node
-                Second mutant being compared
+                The mutant being compared to this mutant
 
         Return:
             True if the nodes representing mutants are distinguishable,
             False otherwise.
 
         """
-        if self == n2:
-            return False
 
-        if self.tests == n2.tests:
-            return False
-
-        return True
+        return (self != n2) and (self.tests != n2.tests)
 
 
 class Graph:
     """The graph object that represents the mutant domination graph
 
     Attributes:
-        self.nodes : list()
-            A list of nodes that represents mutants that are going to be
-            placed in the graph
         self.nodes_added : list()
             A list of nodes that represents mutants that are added to the graph
         self.indistinguishable : list()
             A list of nodes that represents indistinguishable mutants that
             are going to be removed
-
-    Methods:
-        add_node(self, node)
-            Adds the given node to the graph
-        connect_nodes(self)
-            Connects all the related nodes in the graph
-        get_minimal_mutant_list(self)
-            Gets the minimal mutant list
 
         """
 
@@ -228,15 +227,14 @@ class Graph:
 
     def add_node(self, node):
         """Adds a given node to the list of the nodes on the graph.
+
         If the node that is passed in is a valid instance of Node class,
         this function adds the given node to the graph, but it doesn't create
         a relation between the existing nodes and the newly added node.
 
         Parameters:
-            self: Graph
-                Graph containing all the nodes representing mutants
             node: Node
-                Node that is being added to the graph
+                Node that is being added to this graph
 
         Returns:
             True if the node is added to the graph, False otherwise.
@@ -250,19 +248,17 @@ class Graph:
 
     def connect_nodes(self):
         """Connects the nodes that are already placed in the graph.
+
         Comparing all the nodes in the graph, it determines whether a
         relationship could exist between them by checking
         whether they are the same or that the sets of their test identifiers
         are a subset or superset of each other.
-        Finally, it removes indistinguishable nodes, keeping only the one node
+
+        Finally, it removes indistinguishable nodes, keeping only one node
         out of each set of indistinguishable nodes.
 
-
-        Parameters:
-            self: Graph
-
             """
-        for n1 in range(0, len(self.nodes.copy())):
+        for n1 in range(0, len(self.nodes)):
 
             self.nodes_added.append(self.nodes[n1])
             for n2 in range(0, len(self.nodes_added)):
@@ -282,7 +278,8 @@ class Graph:
                         continue
 
                     else:
-                        self.nodes[n2].add_relation(self.nodes[n1], self)
+                        self.nodes[n2].place_mutant_in_graph(self.nodes[n1],
+                                                             self)
 
         for node in self.indistinguishable:
             self.nodes.remove(node)
@@ -290,13 +287,19 @@ class Graph:
 
 def calculate_dominating_mutants(kill_map):
     """Calculates a dominating set of mutants.
+
     Calculates the dominating set of mutants in a graph given a mapping from
     mutant identifiers to a set of identifiers of tests that kill each mutant.
+
     This function initializes a graph and adds all the mutant identifiers
     with their test identifiers in the kill map as initialized nodes to the
-    graph. It then connects these nodes by establishing relationships between
+    graph.
+
+    It then connects these nodes by establishing relationships between
     nodes that contain test identifiers that are subset or superset of each
-    other. Finally, it returns a set of mutant identifiers with which contain a
+    other.
+
+    Finally, it returns a set of mutant identifiers with which contain a
     minimal set of test identifiers which would kill all the mutants in the
     kill map.
 
@@ -309,7 +312,7 @@ def calculate_dominating_mutants(kill_map):
         (tuple): containing
             graph : Graph
                 The graph containing nodes that represent mutants
-            dominator_mutants_set: set()
+            dominator_mutants_set: set[int]
                 The set of identifiers of mutants in a dominating set.
     """
 
@@ -323,7 +326,7 @@ def calculate_dominating_mutants(kill_map):
 
     dominator_mutants_set = set()
     for mutants in graph.nodes:
-        if mutants.parents is None or len(mutants.parents) == 0:
+        if mutants.parents == None or len(mutants.parents) == 0:
             dominator_mutants_set.add(mutants.mutant_name)
 
     return graph, dominator_mutants_set
