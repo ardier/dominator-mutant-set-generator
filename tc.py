@@ -1,4 +1,8 @@
+import csv
 from typing import Set
+
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 class Node:
@@ -290,7 +294,7 @@ class Graph:
                 Node that is being added to this graph
 
         """
-        if isinstance(node, Node) and node not in self.nodes:
+        if node not in self.nodes:
             self.nodes.append(node)
 
     def create_edges(self):
@@ -332,6 +336,40 @@ class Graph:
         for node in self.indistinguishable:
             self.nodes.remove(node)
 
+    def get_tests_covered(self, node):
+        """Returns all the tests covered by a mutant
+
+        Recursively iterates from a node representing a dominator mutant to
+        nodes with no children identifiers at the bottom of the subsumpsion
+        graph.
+
+        It then returns all the tests identifiers for the nodes with no
+        children identifiers that are subsumed by the first node that was
+        passed in.
+
+        If a node has no children identifiers, then its tests identifiers are
+        returned.
+
+        Parameters:
+            node: Node
+                A node on the graph
+
+        Returns:
+            tests_covered: set[int]
+
+
+
+        """
+        if node.children == set():
+            return node.tests
+        else:
+            tests_covered = set()
+            for child in node.children:
+                tests_covered = tests_covered.union(
+                    self.get_tests_covered(child))
+
+            return tests_covered
+
 
 def calculate_dominating_mutants(kill_map):
     """Calculates a dominating set of mutants
@@ -347,9 +385,10 @@ def calculate_dominating_mutants(kill_map):
     nodes that contain test identifiers that are a subset or superset of each
     other.
 
-    Finally, it returns a set of mutant identifiers which contain a
-    minimal set of test identifiers which would kill all the mutants in the
-    kill map.
+    Finally, it returns the graph containing these mutants and two minimal
+    sets of mutants which contain a minimal set of test identifiers. One of
+    these sets only contains name identifiers, whereas the second one
+    contains node objects.
 
 
     Parameters:
@@ -361,7 +400,10 @@ def calculate_dominating_mutants(kill_map):
             graph : Graph
                 The graph containing nodes that represent mutants
             dominator_mutants_set: set[int]
-                The set of identifiers of mutants in a dominating set.
+                The set of name identifiers of mutants in a dominating set.
+            dominator_mutants_set_actual_mutant: set[Node]
+                The set of Node objects representing mutants in a dominating
+                set.
     """
 
     graph = Graph()
@@ -377,8 +419,196 @@ def calculate_dominating_mutants(kill_map):
     # Create a set of dominator mutants.
     # Any mutant(node) that doesn't have a parent is a dominator mutant
     dominator_mutants_set = set()
+    dominator_mutants_set_actual_mutant = list()
     for mutants in graph.nodes:
         if mutants.parents == None or len(mutants.parents) == 0:
             dominator_mutants_set.add(mutants.mutant_name)
+            dominator_mutants_set_actual_mutant.append(mutants)
 
-    return graph, dominator_mutants_set
+    return graph, dominator_mutants_set, dominator_mutants_set_actual_mutant
+
+
+def generate_test_completeness_plot(kill_map):
+    """Generates test completeness plot
+
+    Takes a mapping of mutants to tests they cover. Calls
+    calculate_dominating_mutants on the kill_map to store a dominating set of
+    mutants.
+
+    This set is then used to all the tests that are subsumed by each of these
+    mutants by calling get_tests_covered. This creates a mapping of each
+    mutant to tests they kill through their subsumed mutants.
+
+    This mapping is then used generate the test completeness plot. First,
+    the mapping is sorted by the number of tests each mutant subsumes and
+    those tests are added to the list of tests that are explored thus far.
+
+    Then, the set of tests explored so far is subtracted from the test
+    identifiers of each dominating mutant in the mapping, and the remaning
+    mutants are re-sorted based on the number of remaining test identifiers.
+
+    The above process is repeated until all dominating mutants are considered.
+
+
+
+    Parameters:
+        kill_map: A mapping from a set of identifiers from mutants killed to a
+        set of identifiers for tests that kill each mutant.
+
+    Returns:
+        plot: List[tuple(int, int)]
+            A list of plot points that could used to plot test completeness
+    """
+
+    # Get the dominator set of mutants and their graph
+    result = calculate_dominating_mutants(kill_map)
+    dominator_set = result[2]
+    graph = result[0]
+    plot = [(0, 0)]
+
+    # Initialize a a dictionary to keep track of test completeness
+    test_completeness_dict = dict()
+
+    # Add dominator mutants and their covered tests to the list
+    # Create a mapping of mutant -> {tests}
+    for mutants in dominator_set:
+        test_completeness_dict[mutants.mutant_name] = graph.get_tests_covered(
+            mutants)
+
+    # Create a sorted list of dominator mutants based on the number of tests
+    # they cover
+
+    tests_added_plotted_so_far = set()
+
+    # Add its tests so far to the list
+    for mutants_counter in (range(len(test_completeness_dict.copy().items()))):
+        # 1.3 generate new sorted list (resort list)
+        sorted_list = sorted(test_completeness_dict,
+                             key=lambda k: len(test_completeness_dict[k]),
+                             reverse=True)
+
+        # Add the tests from the latest mutant to the set of tests already
+        # visited
+
+        tests_added_plotted_so_far = tests_added_plotted_so_far.union(
+            test_completeness_dict.get(
+                sorted_list[0]))
+
+        # Add new point to the plot using the x = muntants counter and
+        # y = len(# tests) as
+
+        plot.append((mutants_counter + 1, len(tests_added_plotted_so_far)))
+
+        # Remove tests added so far from the rest of the list (DO need to
+        # use a for loop inside this for loop for the rest of the mutants on the
+        # list)
+
+        for other_mutants in range(1, len(sorted_list)):
+            temp = test_completeness_dict.get(sorted_list[other_mutants])
+            temp = temp - tests_added_plotted_so_far
+            test_completeness_dict[sorted_list[other_mutants]] = temp
+        # Remove the current mutant from the dict
+        test_completeness_dict.pop(sorted_list[0])
+
+    return plot
+
+
+# TODO Improve this
+def plot(plot):
+    """Plots the test completeness graph
+
+    Plots the test completes achieved on the y axis for for each unit of work
+    which is a (dominator) mutant presented.
+
+    Parameters:
+         plot: List[tuple(int, int)]
+            A list of plot points that could used to plot test completeness
+
+            """
+    plotter = pd.DataFrame(
+        data=plot,
+        columns=["Work", "Test Completeness"]
+    )
+    ax = plotter.plot(x='Work', y='Test Completeness',
+                      xticks=range(len(plot)),
+                      yticks=range(0, plot[(len(plot) - 1)][1], 100),
+                      legend=False)
+    ax.set_ylabel("Test Completeness")
+    plt.show()
+
+
+def convert_csv_to_killmap(csv_filename):
+    """Converts a CSV file generated in Major framework to a killmap
+
+    Parameters:
+        csv_filename: .csv document
+            A csv document generated by the Major framework containing a
+            mapping from mutants to the tests they kill
+
+    Returns:
+        kill_map: A mapping from a set of identifiers from mutants killed to a
+        set of identifiers for tests that kill each mutant.
+    """
+    with open(csv_filename, newline='') as File:
+        kill_map = {}
+        reader = csv.reader(File)
+
+        # skipping the header
+        next(reader)
+        for k, y in reader:
+            # converting to integers
+            k = int(k)
+            j = frozenset({k})
+            y = int(y)
+            s = kill_map.get(j, set())
+            s.add(y)
+            kill_map[j] = s
+        return kill_map
+
+
+def generate_dominator_set_with_csv(csv_filename):
+    """Calculates a dominating set of mutants given a CSV file containing the
+    mapping from mutants to tests the kill
+
+    See documentation for convert_csv_to_killmap and
+    calculate_dominating_mutants.
+
+    Parameters:
+        csv_filename: .csv document
+        A csv document generated by the Major framework containing a
+        mapping from mutants to the tests they kill
+
+    Returns:
+    (tuple): containing
+        graph : Graph
+            The graph containing nodes that represent mutants
+        dominator_mutants_set: set[int]
+            The set of name identifiers of mutants in a dominating set.
+        dominator_mutants_set_actual_mutant: set[Node]
+            The set of Node objects representing mutants in a dominating
+            set.
+        """
+    kill_map = convert_csv_to_killmap(csv_filename)
+    return calculate_dominating_mutants(kill_map)
+
+
+def generate_test_completeness_plot_from_csv(csv_filename):
+    """Generates the test completeness plot given a CSV file containing the
+    mapping from mutants to tests the kill
+
+    See documentation for convert_csv_to_killmap,
+    generate_test_completeness_plot, and plot
+
+    Parameters:
+        csv_filename: .csv document
+            A csv document generated by the Major framework containing a
+            mapping from mutants to the tests they kill
+
+    Returns:
+        plotted_points: List[tuple(int, int)]
+            A list of plot points that could used to plot test completeness
+    """
+    kill_map = convert_csv_to_killmap(csv_filename)
+    plotted_points = generate_test_completeness_plot(kill_map)
+    plot(plotted_points)
+    return plotted_points
