@@ -62,6 +62,7 @@ class Node:
         self.parents = set()
 
     def determine_mutant_subsumption(self, new_node, graph):
+
         """Determines whether new_node's placement compared to this node.
 
         Assumes that the nodes that are passed in are related.
@@ -86,29 +87,26 @@ class Node:
         # This may seem redundant, but it is required because sometimes adding
         # new nodes to the graph will result in multiple edges being re-drawn.
         # This may result in discovery of new indistinguishable nodes.
-        if not self.is_distinguishable_from(new_node):
-            if not self == new_node:
-                self.merge_indistinguishable_nodes(new_node, graph)
+        # if not self.is_distinguishable_from(new_node):
+        #     print("they are not distinguishable")
+        #     if not self == new_node:
+        #         self.merge_indistinguishable_nodes(new_node, graph)
 
         # Determining dominance vs. subsumption using test identifiers
-        else:
-            if self.tests.issubset(new_node.tests):
-                self.update_dominant(new_node, graph)
+        if self.tests.issubset(new_node.tests):
+            self.update_dominant(new_node, graph)
 
-            else:
-                self.update_subsumed(new_node, graph)
+        else:
+            self.update_subsumed(new_node, graph)
 
     def update_dominant(self, new_node, graph):
         """Updates the dominant node on the graph with new_node
-
         If this node has any children, for any given child of this node, if the
         child's set of test identifiers is a subset of new_node's set of test
         identifiers, this function calls determine_mutant_subsumption on the
         child. Otherwise, add_children_in_between is called on this node.
-
         If this node doesn't have any children, the function calls
         add_children on this node.
-
         Parameters:
             new_node: Node
                 A new node representing a mutant that is being added to the the
@@ -121,19 +119,24 @@ class Node:
         # graph
         # In a large graph, this case is more likely. Therefore, it is the
         # first possible choice in the conditional
-        if self.children != set():
-            for child in self.children:
 
+        if len(self.children):
+            children_can_relate = False
+            for child in self.children.copy():
                 if child.tests.issubset(new_node.tests):
-
-                    # Determining where new_node is going to be on the graph
-                    # relative to the self's child
-                    child.determine_mutant_subsumption(new_node, graph)
-
-                else:
+                    children_can_relate = True
+                    if child == new_node:
+                        continue
+                    else:
+                        # Determining where new_node is going to be on the graph
+                        # relative to the self's child
+                        child.determine_mutant_subsumption(new_node, graph)
+                elif child.tests.issuperset(new_node.tests):
+                    children_can_relate = True
                     # Adding node
                     self.add_children_in_between(new_node, child)
-
+            if not children_can_relate:
+                self.add_children(new_node)
         # Base case: if this node doesn't have children, just add new_node as
         # its child
         else:
@@ -141,38 +144,39 @@ class Node:
 
     def update_subsumed(self, new_node, graph):
         """Updates the subsumed node on the graph with new_node
-
         If this node has any parents, for any given child of this node, if the
         child's set of test identifiers is a superset of new_node's set of test
         identifiers, this functions calls determine_mutant_subsumption on the
         parent. Otherwise, add_children_in_between is called on the parent.
-
         If this node doesn't have any parents, the function calls
         add_children on new_node.
-
        Parameters:
             new_node: Node
                 A new node representing a mutant that is being added to the the
                 graph and is dominated by this node
             graph: Graph
                 A graph containing nodes that represent mutants
-
         """
         # Check whether this node has parents, and if yes, explore the
         # possibility of placing new_node relative to those parents on the
         # graph
         # In a large graph, this case is more likely. Therefore, it is the
         # first possible choice in the conditional
-        if self.parents != set():
-            for parent in self.parents:
-
+        if len(self.parents):
+            parents_can_relate = False
+            for parent in self.parents.copy():
                 if parent.tests.issuperset(new_node.tests):
-
-                    # adding new_node as a relative of self's child
-                    parent.determine_mutant_subsumption(new_node, graph)
-
-                else:
+                    parents_can_relate = True
+                    if parent == new_node:
+                        continue
+                    else:
+                        # adding new_node as a relative of self's child
+                        parent.determine_mutant_subsumption(new_node, graph)
+                elif parent.tests.issubset(new_node.tests):
+                    parents_can_relate = True
                     parent.add_children_in_between(new_node, self)
+            if not parents_can_relate:
+                new_node.add_children(self)
 
         # Base case: if self doesn't have parents, just add new_node as its
         # parent (or add self as new_node's child)
@@ -218,6 +222,7 @@ class Node:
         child.parents.add(new_node)
         child.parents.remove(self)
 
+    # TODO update specs
     def merge_indistinguishable_nodes(self, n2, graph):
         """Merges two nodes that represent mutants in a given graph
 
@@ -237,8 +242,6 @@ class Node:
 
         """
         self.mutant_name = self.mutant_name.union(n2.mutant_name)
-        if n2 not in graph.indistinguishable:
-            graph.indistinguishable.append(n2)
 
     def is_distinguishable_from(self, n2):
         """Determines whether two nodes are distinguishable using direct
@@ -282,7 +285,7 @@ class Graph:
         self.nodes_added = []
         self.indistinguishable = []
 
-    def add_node(self, node):
+    def add_node(self, new_node):
         """Adds a given node to the list of the nodes on the graph
 
         If the node that is passed in is a valid instance of Node class,
@@ -290,12 +293,20 @@ class Graph:
         a relation between the existing nodes and the newly added node.
 
         Parameters:
-            node: Node
+            new_node: Node
                 Node that is being added to this graph
 
         """
-        if node not in self.nodes:
-            self.nodes.append(node)
+        if new_node not in self.nodes:
+
+            for node in self.nodes:
+                if not new_node.is_distinguishable_from(node):
+                    node.merge_indistinguishable_nodes(new_node, self)
+                    break
+
+
+            else:
+                self.nodes.append(new_node)
 
     def create_edges(self):
         """Creates edge and connects the nodes that are already placed in the
@@ -312,18 +323,17 @@ class Graph:
             """
         for n1 in range(0, len(self.nodes)):
 
-            self.nodes_added.append(self.nodes[n1])
-            for n2 in range(0, len(self.nodes_added)):
+            # self.nodes_added.append(self.nodes[n1])
+            for n2 in range(0, n1):
 
                 # If the nodes are the same
                 # or if at least the set of test identifiers in one of them is
                 # not a subset of the other one, move on to the next node
 
-                if n1 == n2 or \
-                        not (self.nodes[n2].tests.issubset(
-                            self.nodes[n1].tests) or
-                             self.nodes[n2].tests.issuperset(
-                                 self.nodes[n1].tests)):
+                if not (self.nodes[n2].tests.issubset(
+                        self.nodes[n1].tests) or
+                        self.nodes[n2].tests.issuperset(
+                            self.nodes[n1].tests)):
                     continue
 
                 # If the nodes can have edges between them, determine their
@@ -333,8 +343,8 @@ class Graph:
                         self.nodes[n1],
                         self)
 
-        for node in self.indistinguishable:
-            self.nodes.remove(node)
+        # for node in self.indistinguishable:
+        #     self.nodes.remove(node)
 
     def get_tests_covered(self, node):
         """Returns all the tests covered by a mutant
@@ -558,11 +568,12 @@ def convert_csv_to_killmap(csv_filename):
         for k, y in reader:
             # converting to integers
             k = int(k)
-            j = frozenset({k})
             y = int(y)
+            j = frozenset({y})
             s = kill_map.get(j, set())
-            s.add(y)
+            s.add(k)
             kill_map[j] = s
+
         return kill_map
 
 
@@ -612,3 +623,58 @@ def generate_test_completeness_plot_from_csv(csv_filename):
     plotted_points = generate_test_completeness_plot(kill_map)
     plot(plotted_points)
     return plotted_points
+
+
+def convert_csv_to_killmap_3_columns(csv_filename):
+    """Converts a CSV(with 3 columns) file generated in Major framework to a killmap
+
+    Parameters:
+        csv_filename: .csv document
+            A csv document generated by the Major framework containing a
+            mapping from mutants to the tests they kill
+
+    Returns:
+        kill_map: A mapping from a set of identifiers from mutants killed to a
+        set of identifiers for tests that kill each mutant.
+    """
+    with open(csv_filename, newline='') as File:
+        kill_map = {}
+        reader = csv.reader(File)
+
+        # skipping the header
+        next(reader)
+        for k, y, extra_column in reader:
+            # converting to integers
+            k = int(k)
+            y = int(y)
+            j = frozenset({y})
+            s = kill_map.get(j, set())
+            s.add(k)
+            kill_map[j] = s
+        return kill_map
+
+
+def generate_dominator_set_with_csv_3_col(csv_filename):
+    """Calculates a dominating set of mutants given a CSV(3 columns) file containing the
+    mapping from mutants to tests the kill
+
+    See documentation for convert_csv_to_killmap and
+    calculate_dominating_mutants.
+
+    Parameters:
+        csv_filename: .csv document
+        A csv document generated by the Major framework containing a
+        mapping from mutants to the tests they kill
+
+    Returns:
+    (tuple): containing
+        graph : Graph
+            The graph containing nodes that represent mutants
+        dominator_mutants_set: set[int]
+            The set of name identifiers of mutants in a dominating set.
+        dominator_mutants_set_actual_mutant: set[Node]
+            The set of Node objects representing mutants in a dominating
+            set.
+        """
+    kill_map = convert_csv_to_killmap_3_columns(csv_filename)
+    return calculate_dominating_mutants(kill_map)
