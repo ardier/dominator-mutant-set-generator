@@ -1,1 +1,1 @@
-# testcompleteness
+# Minimal Dominator Mutant Set Generator
