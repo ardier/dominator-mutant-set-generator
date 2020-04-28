@@ -1,9 +1,6 @@
 import csv
 from typing import Set
 
-import matplotlib.pyplot as plt
-import pandas as pd
-
 
 class Node:
     tests: Set[int]
@@ -73,7 +70,6 @@ class Node:
         node are a subset of the test identifiers in new_node, it will call
         update_dominant on this node. Otherwise, it will call update_subsumed.
 
-
         Parameters:
             new_node: Node
                 A new node representing a mutant that is being added to the the
@@ -81,17 +77,7 @@ class Node:
             graph: Graph
                 A graph containing nodes that represent mutants
 
-
         """
-
-        # This may seem redundant, but it is required because sometimes adding
-        # new nodes to the graph will result in multiple edges being re-drawn.
-        # This may result in discovery of new indistinguishable nodes.
-        # if not self.is_distinguishable_from(new_node):
-        #     print("they are not distinguishable")
-        #     if not self == new_node:
-        #         self.merge_indistinguishable_nodes(new_node, graph)
-
         # Determining dominance vs. subsumption using test identifiers
         if self.tests.issubset(new_node.tests):
             self.update_dominant(new_node, graph)
@@ -213,7 +199,6 @@ class Node:
                 graph
             child: Node
                 A child node of this node that already exists on the graph
-
         """
         new_node.parents.add(self)
         new_node.children.add(child)
@@ -222,24 +207,14 @@ class Node:
         child.parents.add(new_node)
         child.parents.remove(self)
 
-    # TODO update specs
     def merge_indistinguishable_nodes(self, n2, graph):
         """Merges two nodes that represent mutants in a given graph
-
-        It renames this node to include the n2's identifier by union-ing the
-        sets containing each node's identifier.
-
-        It adds the second node to graph.indistinguishable, which is a member
-        variable of graph. graph.indistinguishable is a list of
-        indistinguishable nodes that will be removed later by
-        graph.connect_node().
 
         Parameters:
             n2: Node
                 Second mutant
             graph: Graph
                 The graph containing these mutants
-
         """
         self.mutant_name = self.mutant_name.union(n2.mutant_name)
 
@@ -253,9 +228,8 @@ class Node:
                 The mutant being compared to this mutant
 
         Return:
-            True if the nodes representing mutants are distinguishable;
+            True if the this node and n2 represent mutants that are distinguishable;
             False otherwise.
-
         """
 
         return (self != n2) and (self.tests != n2.tests)
@@ -263,34 +237,25 @@ class Node:
 
 class Graph:
     """The graph object that represents the mutant domination graph
-
-        """
+    """
 
     def __init__(self):
         """Initiates the graph object
 
         Attributes:
-            self.nodes_added : List[Node]
+            self.nodes : List[Node]
                 A list of nodes that represents mutants that are going to be
                 added to the graph if create_edges is called on it
-            self.nodes_added : List[Node]
-                A list of nodes that represents mutants that are added to the
-                graph by create_edges
-            self.indistinguishable : List[Node]
-                A list of nodes that represents indistinguishable mutants that
-                are going to be removed
-
         """
         self.nodes = []
-        self.nodes_added = []
-        self.indistinguishable = []
 
     def add_node(self, new_node):
         """Adds a given node to the list of the nodes on the graph
 
-        If the node that is passed in is a valid instance of Node class,
-        this function adds the given node to the graph, but it doesn't create
-        a relation between the existing nodes and the newly added node.
+        If the node that is passed in doesn't have an equivalent node in class
+         already, this function adds the given node to the list of nodes
+         present in the graph, but it doesn't create a relation between the
+         existing nodes and the newly added node.
 
         Parameters:
             new_node: Node
@@ -304,30 +269,25 @@ class Graph:
                     node.merge_indistinguishable_nodes(new_node, self)
                     break
 
-
             else:
                 self.nodes.append(new_node)
 
     def create_edges(self):
-        """Creates edge and connects the nodes that are already placed in the
+        """Creates edges and connects the nodes that are already placed in the
         graph.
 
         Comparing all the nodes in the graph, it determines whether a
         relationship could exist between them by checking
-        whether they are the same or that the sets of their test identifiers
-        are a subset or superset of each other.
+        whether the sets of their test identifiers are a subset or superset
+        of each other.
 
-        Finally, it removes indistinguishable nodes, keeping only one node
-        out of each set of indistinguishable nodes.
-
-            """
+        """
         for n1 in range(0, len(self.nodes)):
 
             # self.nodes_added.append(self.nodes[n1])
             for n2 in range(0, n1):
 
-                # If the nodes are the same
-                # or if at least the set of test identifiers in one of them is
+                # If at least the set of test identifiers in one of them is
                 # not a subset of the other one, move on to the next node
 
                 if not (self.nodes[n2].tests.issubset(
@@ -342,9 +302,6 @@ class Graph:
                     self.nodes[n2].determine_mutant_subsumption(
                         self.nodes[n1],
                         self)
-
-        # for node in self.indistinguishable:
-        #     self.nodes.remove(node)
 
     def get_tests_covered(self, node):
         """Returns all the tests covered by a mutant
@@ -366,10 +323,8 @@ class Graph:
 
         Returns:
             tests_covered: set[int]
-
-
-
         """
+
         if node.children == set():
             return node.tests
         else:
@@ -438,115 +393,6 @@ def calculate_dominating_mutants(kill_map):
     return graph, dominator_mutants_set, dominator_mutants_set_actual_mutant
 
 
-def generate_test_completeness_plot(kill_map):
-    """Generates test completeness plot
-
-    Takes a mapping of mutants to tests they cover. Calls
-    calculate_dominating_mutants on the kill_map to store a dominating set of
-    mutants.
-
-    This set is then used to all the tests that are subsumed by each of these
-    mutants by calling get_tests_covered. This creates a mapping of each
-    mutant to tests they kill through their subsumed mutants.
-
-    This mapping is then used generate the test completeness plot. First,
-    the mapping is sorted by the number of tests each mutant subsumes and
-    those tests are added to the list of tests that are explored thus far.
-
-    Then, the set of tests explored so far is subtracted from the test
-    identifiers of each dominating mutant in the mapping, and the remaning
-    mutants are re-sorted based on the number of remaining test identifiers.
-
-    The above process is repeated until all dominating mutants are considered.
-
-
-
-    Parameters:
-        kill_map: A mapping from a set of identifiers from mutants killed to a
-        set of identifiers for tests that kill each mutant.
-
-    Returns:
-        plot: List[tuple(int, int)]
-            A list of plot points that could used to plot test completeness
-    """
-
-    # Get the dominator set of mutants and their graph
-    result = calculate_dominating_mutants(kill_map)
-    dominator_set = result[2]
-    graph = result[0]
-    plot = [(0, 0)]
-
-    # Initialize a a dictionary to keep track of test completeness
-    test_completeness_dict = dict()
-
-    # Add dominator mutants and their covered tests to the list
-    # Create a mapping of mutant -> {tests}
-    for mutants in dominator_set:
-        test_completeness_dict[mutants.mutant_name] = graph.get_tests_covered(
-            mutants)
-
-    # Create a sorted list of dominator mutants based on the number of tests
-    # they cover
-
-    tests_added_plotted_so_far = set()
-
-    # Add its tests so far to the list
-    for mutants_counter in (range(len(test_completeness_dict.copy().items()))):
-        # 1.3 generate new sorted list (resort list)
-        sorted_list = sorted(test_completeness_dict,
-                             key=lambda k: len(test_completeness_dict[k]),
-                             reverse=True)
-
-        # Add the tests from the latest mutant to the set of tests already
-        # visited
-
-        tests_added_plotted_so_far = tests_added_plotted_so_far.union(
-            test_completeness_dict.get(
-                sorted_list[0]))
-
-        # Add new point to the plot using the x = muntants counter and
-        # y = len(# tests) as
-
-        plot.append((mutants_counter + 1, len(tests_added_plotted_so_far)))
-
-        # Remove tests added so far from the rest of the list (DO need to
-        # use a for loop inside this for loop for the rest of the mutants on the
-        # list)
-
-        for other_mutants in range(1, len(sorted_list)):
-            temp = test_completeness_dict.get(sorted_list[other_mutants])
-            temp = temp - tests_added_plotted_so_far
-            test_completeness_dict[sorted_list[other_mutants]] = temp
-        # Remove the current mutant from the dict
-        test_completeness_dict.pop(sorted_list[0])
-
-    return plot
-
-
-# TODO Improve this
-def plot(plot):
-    """Plots the test completeness graph
-
-    Plots the test completes achieved on the y axis for for each unit of work
-    which is a (dominator) mutant presented.
-
-    Parameters:
-         plot: List[tuple(int, int)]
-            A list of plot points that could used to plot test completeness
-
-            """
-    plotter = pd.DataFrame(
-        data=plot,
-        columns=["Work", "Test Completeness"]
-    )
-    ax = plotter.plot(x='Work', y='Test Completeness',
-                      xticks=range(len(plot)),
-                      yticks=range(0, plot[(len(plot) - 1)][1], 100),
-                      legend=False)
-    ax.set_ylabel("Test Completeness")
-    plt.show()
-
-
 def convert_csv_to_killmap(csv_filename):
     """Converts a CSV file generated in Major framework to a killmap
 
@@ -601,28 +447,6 @@ def generate_dominator_set_with_csv(csv_filename):
         """
     kill_map = convert_csv_to_killmap(csv_filename)
     return calculate_dominating_mutants(kill_map)
-
-
-def generate_test_completeness_plot_from_csv(csv_filename):
-    """Generates the test completeness plot given a CSV file containing the
-    mapping from mutants to tests the kill
-
-    See documentation for convert_csv_to_killmap,
-    generate_test_completeness_plot, and plot
-
-    Parameters:
-        csv_filename: .csv document
-            A csv document generated by the Major framework containing a
-            mapping from mutants to the tests they kill
-
-    Returns:
-        plotted_points: List[tuple(int, int)]
-            A list of plot points that could used to plot test completeness
-    """
-    kill_map = convert_csv_to_killmap(csv_filename)
-    plotted_points = generate_test_completeness_plot(kill_map)
-    plot(plotted_points)
-    return plotted_points
 
 
 def convert_csv_to_killmap_3_columns(csv_filename):
