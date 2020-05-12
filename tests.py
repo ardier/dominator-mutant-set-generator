@@ -1,6 +1,7 @@
 import unittest
 
 import dominator_mutants
+import test_completeness
 import txt_to_dominator_mutants
 
 
@@ -8,31 +9,31 @@ class TestCase(unittest.TestCase):
 
     def test_create_empty_node_with_no_name_and_tests(self):
         test_node = dominator_mutants.Node()
-        self.assertEquals(set(), test_node.mutant_name)
-        self.assertEquals(set(), test_node.tests)
-        self.assertEquals(set(), test_node.children)
-        self.assertEquals(set(), test_node.parents)
+        self.assertEqual(set(), test_node.mutant_name)
+        self.assertEqual(set(), test_node.tests)
+        self.assertEqual(set(), test_node.children)
+        self.assertEqual(set(), test_node.parents)
 
     def test_create_simple_node_with_all_attributes(self):
         test_node = dominator_mutants.Node({1}, {1, 2})
-        self.assertEquals(test_node.mutant_name, {1})
-        self.assertEquals(test_node.tests, {1, 2})
-        self.assertEquals(set(), test_node.children)
-        self.assertEquals(set(), test_node.parents)
+        self.assertEqual(test_node.mutant_name, {1})
+        self.assertEqual(test_node.tests, {1, 2})
+        self.assertEqual(set(), test_node.children)
+        self.assertEqual(set(), test_node.parents)
 
     def test_create_node_from_with_tests_only_from_kill_map(self):
         kill_map = {frozenset({1}): {1, 2}, frozenset({2}): {1, 4},
                     frozenset({3}): {2}, frozenset({4}): {1, 2, 3, 4}}
         test_graph = dominator_mutants.calculate_dominating_mutants(kill_map)[0]
 
-        self.assertEquals(test_graph.nodes[0].mutant_name,
-                          list(kill_map.keys())[0])
-        self.assertEquals(test_graph.nodes[0].tests,
-                          kill_map.get(list(kill_map)[0]))
-        self.assertEquals(test_graph.nodes[3].mutant_name,
-                          list(kill_map.keys())[3])
-        self.assertEquals(test_graph.nodes[3].tests,
-                          kill_map.get(list(kill_map)[3]))
+        self.assertEqual(test_graph.nodes[0].mutant_name,
+                         list(kill_map.keys())[0])
+        self.assertEqual(test_graph.nodes[0].tests,
+                         kill_map.get(list(kill_map)[0]))
+        self.assertEqual(test_graph.nodes[3].mutant_name,
+                         list(kill_map.keys())[3])
+        self.assertEqual(test_graph.nodes[3].tests,
+                         kill_map.get(list(kill_map)[3]))
 
     def test_is_distinguishable(self):
         mutant_2 = dominator_mutants.Node(frozenset({2}), {1, 4})
@@ -56,13 +57,13 @@ class TestCase(unittest.TestCase):
         for node in test_graph.nodes:
             result.append(node)
 
-        self.assertEquals(result[0].mutant_name, {2, 5})
+        self.assertEqual(result[0].mutant_name, {2, 5})
 
     def test_add_node(self):
         mutant_1 = dominator_mutants.Node({1}, {1, 2})
         test_graph = dominator_mutants.Graph()
         test_graph.add_node(mutant_1)
-        self.assertEquals(mutant_1, test_graph.nodes[0])
+        self.assertEqual(mutant_1, test_graph.nodes[0])
 
     def test_connect_the_same_node_to_itself(self):
         mutant_2 = dominator_mutants.Node({2}, {1, 4})
@@ -74,7 +75,7 @@ class TestCase(unittest.TestCase):
         for nodes in test_graph_nodes:
             result.append(nodes.mutant_name)
 
-        self.assertEquals([{2}], result)
+        self.assertEqual([{2}], result)
 
     def test_connect_nodes_indistinguishable(self):
         mutant_2 = dominator_mutants.Node({2}, {1, 4})
@@ -87,7 +88,7 @@ class TestCase(unittest.TestCase):
         result = []
         for nodes in test_graph_nodes:
             result.append(nodes.mutant_name)
-        self.assertEquals([{2, 5}], result)
+        self.assertEqual([{2, 5}], result)
 
     def test_connect_two_nodes_distinguishable(self):
         mutant_1 = dominator_mutants.Node({1}, {1, 2})
@@ -101,7 +102,7 @@ class TestCase(unittest.TestCase):
         result = []
         for nodes in test_graph_nodes:
             result.append(nodes.mutant_name)
-        self.assertEquals([{1}, {2}], result)
+        self.assertEqual([{1}, {2}], result)
 
     def test_add_relation_just_two_nodes_children(self):
         mutant_3 = dominator_mutants.Node({3}, {2})
@@ -118,12 +119,12 @@ class TestCase(unittest.TestCase):
             mutant_3.parents = set()
         for nodes in mutant_3.parents:
             result.append(nodes.mutant_name)
-        self.assertEquals([], result)
+        self.assertEqual([], result)
         if mutant_3.children is None:
             mutant_3.children = set()
         for parents in mutant_3.children:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([{1}], result_parent)
+        self.assertEqual([{1}], result_parent)
 
         result2 = []
         result_parent2 = []
@@ -132,12 +133,12 @@ class TestCase(unittest.TestCase):
             mutant_1.parents = set()
         for nodes2 in mutant_1.parents:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{3}], result2)
+        self.assertEqual([{3}], result2)
         if mutant_1.parents is None:
             mutant_1.parents = set()
         for parents in mutant_1.parents:
             result_parent2.append(parents.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
     def test_add_relation_for_children_with_3_level_graph(self):
         mutant_3 = dominator_mutants.Node({3}, {2})
@@ -159,13 +160,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[0].children = set()
         for nodes in test_graph.nodes[0].children:
             result.append(nodes.mutant_name)
-        self.assertEquals([{1}], result)
+        self.assertEqual([{1}], result)
 
         if test_graph.nodes[0].parents is None:
             test_graph.nodes[0].parents = set()
         for parents in test_graph.nodes[0].parents:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([], result_parent)
+        self.assertEqual([], result_parent)
 
         # mutant 1
         result2 = []
@@ -175,13 +176,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[1].parents = set()
         for parents2 in test_graph.nodes[1].parents:
             result_parent2.append(parents2.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
         if test_graph.nodes[1].children is None:
             test_graph.nodes[1].children = set()
         for nodes2 in test_graph.nodes[1].children:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{4}], result2)
+        self.assertEqual([{4}], result2)
 
         # mutant 4
         result4 = []
@@ -191,13 +192,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[2].parents = set()
         for parents4 in test_graph.nodes[2].parents:
             result_parent4.append(parents4.mutant_name)
-        self.assertEquals([{1}], result_parent4)
+        self.assertEqual([{1}], result_parent4)
 
         if test_graph.nodes[2].children is None:
             test_graph.nodes[2].children = set()
         for nodes4 in test_graph.nodes[2].children:
             result4.append(nodes4.mutant_name)
-        self.assertEquals([], result4)
+        self.assertEqual([], result4)
 
     def test_add_relation_for_children_with_4_level_graph(self):
         mutant_3 = dominator_mutants.Node({3}, {2})
@@ -221,13 +222,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[0].children = set()
         for nodes in test_graph.nodes[0].children:
             result.append(nodes.mutant_name)
-        self.assertEquals([{1}], result)
+        self.assertEqual([{1}], result)
 
         if test_graph.nodes[0].parents is None:
             test_graph.nodes[0].parents = set()
         for parents in test_graph.nodes[0].parents:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([], result_parent)
+        self.assertEqual([], result_parent)
 
         # mutant 1
         result2 = []
@@ -237,13 +238,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[1].parents = set()
         for parents2 in test_graph.nodes[1].parents:
             result_parent2.append(parents2.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
         if test_graph.nodes[1].children is None:
             test_graph.nodes[1].children = set()
         for nodes2 in test_graph.nodes[1].children:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{6}], result2)
+        self.assertEqual([{6}], result2)
 
         # mutant 6
         result3 = []
@@ -253,13 +254,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[2].parents = set()
         for parents3 in test_graph.nodes[2].parents:
             result_parent3.append(parents3.mutant_name)
-        self.assertEquals([{1}], result_parent3)
+        self.assertEqual([{1}], result_parent3)
 
         if test_graph.nodes[2].children is None:
             test_graph.nodes[2].children = set()
         for nodes3 in test_graph.nodes[2].children:
             result3.append(nodes3.mutant_name)
-        self.assertEquals([{4}], result3)
+        self.assertEqual([{4}], result3)
 
         # mutant 4
         result4 = []
@@ -269,13 +270,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[3].parents = set()
         for parents4 in test_graph.nodes[3].parents:
             result_parent4.append(parents4.mutant_name)
-        self.assertEquals([{6}], result_parent4)
+        self.assertEqual([{6}], result_parent4)
 
         if test_graph.nodes[3].children is None:
             test_graph.nodes[3].children = set()
         for nodes4 in test_graph.nodes[3].children:
             result4.append(nodes4.mutant_name)
-        self.assertEquals([], result4)
+        self.assertEqual([], result4)
 
     def test_add_relation_just_two_nodes_parents(self):
         mutant_3 = dominator_mutants.Node({3}, {2})
@@ -292,12 +293,12 @@ class TestCase(unittest.TestCase):
             mutant_3.parents = set()
         for nodes in mutant_3.parents:
             result.append(nodes.mutant_name)
-        self.assertEquals([], result)
+        self.assertEqual([], result)
         if mutant_3.children is None:
             mutant_3.children = set()
         for parents in mutant_3.children:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([{1}], result_parent)
+        self.assertEqual([{1}], result_parent)
 
         result2 = []
         result_parent2 = []
@@ -306,12 +307,12 @@ class TestCase(unittest.TestCase):
             mutant_1.parents = set()
         for nodes2 in mutant_1.parents:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{3}], result2)
+        self.assertEqual([{3}], result2)
         if mutant_1.parents is None:
             mutant_1.parents = set()
         for parents in mutant_1.parents:
             result_parent2.append(parents.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
     def test_add_relation_for_parents_with_3_level_graph(self):
         mutant_4 = dominator_mutants.Node({4}, {1, 2, 3, 4})
@@ -333,13 +334,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[2].children = set()
         for nodes in test_graph.nodes[2].children:
             result.append(nodes.mutant_name)
-        self.assertEquals([{1}], result)
+        self.assertEqual([{1}], result)
 
         if test_graph.nodes[2].parents is None:
             test_graph.nodes[2].parents = set()
         for parents in test_graph.nodes[2].parents:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([], result_parent)
+        self.assertEqual([], result_parent)
 
         # mutant 1
         result2 = []
@@ -349,13 +350,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[1].parents = set()
         for parents2 in test_graph.nodes[1].parents:
             result_parent2.append(parents2.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
         if test_graph.nodes[1].children is None:
             test_graph.nodes[1].children = set()
         for nodes2 in test_graph.nodes[1].children:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{4}], result2)
+        self.assertEqual([{4}], result2)
 
         # mutant 4
         result4 = []
@@ -365,13 +366,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[0].parents = set()
         for parents4 in test_graph.nodes[0].parents:
             result_parent4.append(parents4.mutant_name)
-        self.assertEquals([{1}], result_parent4)
+        self.assertEqual([{1}], result_parent4)
 
         if test_graph.nodes[0].children is None:
             test_graph.nodes[0].children = set()
         for nodes4 in test_graph.nodes[0].children:
             result4.append(nodes4.mutant_name)
-        self.assertEquals([], result4)
+        self.assertEqual([], result4)
 
     def test_add_relation_for_parents_with_3_level_graph_one_indistinguishable(
             self):
@@ -396,13 +397,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[2].parents = set()
         for parents2 in test_graph.nodes[2].parents:
             result_parent2.append(parents2.mutant_name)
-        self.assertEquals([], result_parent2)
+        self.assertEqual([], result_parent2)
 
         if test_graph.nodes[2].children is None:
             test_graph.nodes[2].children = set()
         for nodes2 in test_graph.nodes[2].children:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{1, 6}], result2)
+        self.assertEqual([{1, 6}], result2)
 
         # mutant 1, 6
         result3 = []
@@ -412,13 +413,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[1].parents = set()
         for parents3 in test_graph.nodes[1].parents:
             result_parent3.append(parents3.mutant_name)
-        self.assertEquals([{3}], result_parent3)
+        self.assertEqual([{3}], result_parent3)
 
         if test_graph.nodes[1].children is None:
             test_graph.nodes[1].children = set()
         for nodes3 in test_graph.nodes[1].children:
             result3.append(nodes3.mutant_name)
-        self.assertEquals([{4}], result3)
+        self.assertEqual([{4}], result3)
 
         # mutant 4
         result4 = []
@@ -428,13 +429,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[0].parents = set()
         for parents4 in test_graph.nodes[0].parents:
             result_parent4.append(parents4.mutant_name)
-        self.assertEquals([{1, 6}], result_parent4)
+        self.assertEqual([{1, 6}], result_parent4)
 
         if test_graph.nodes[0].children is None:
             test_graph.nodes[0].children = set()
         for nodes4 in test_graph.nodes[0].children:
             result4.append(nodes4.mutant_name)
-        self.assertEquals([], result4)
+        self.assertEqual([], result4)
 
     def test_add_relation_for_parents_with_4_level_graph_2(self):
         mutant_4 = dominator_mutants.Node({4}, {1, 2, 3, 4})
@@ -458,13 +459,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[3].children = set()
         for nodes in test_graph.nodes[3].children:
             result.append(nodes.mutant_name)
-        self.assertEquals([{1}], result)
+        self.assertEqual([{1}], result)
 
         if test_graph.nodes[3].parents is None:
             test_graph.nodes[3].parents = set()
         for parents in test_graph.nodes[3].parents:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([], result_parent)
+        self.assertEqual([], result_parent)
 
         # mutant 1
         result2 = []
@@ -474,13 +475,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[2].parents = set()
         for parents2 in test_graph.nodes[2].parents:
             result_parent2.append(parents2.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
         if test_graph.nodes[2].children is None:
             test_graph.nodes[2].children = set()
         for nodes2 in test_graph.nodes[2].children:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{6}], result2)
+        self.assertEqual([{6}], result2)
 
         # mutant 6
         result3 = []
@@ -490,13 +491,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[1].parents = set()
         for parents3 in test_graph.nodes[1].parents:
             result_parent3.append(parents3.mutant_name)
-        self.assertEquals([{1}], result_parent3)
+        self.assertEqual([{1}], result_parent3)
 
         if test_graph.nodes[1].children is None:
             test_graph.nodes[1].children = set()
         for nodes3 in test_graph.nodes[1].children:
             result3.append(nodes3.mutant_name)
-        self.assertEquals([{4}], result3)
+        self.assertEqual([{4}], result3)
 
         # mutant 4
         result4 = []
@@ -506,13 +507,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[0].parents = set()
         for parents4 in test_graph.nodes[0].parents:
             result_parent4.append(parents4.mutant_name)
-        self.assertEquals([{6}], result_parent4)
+        self.assertEqual([{6}], result_parent4)
 
         if test_graph.nodes[0].children is None:
             test_graph.nodes[0].children = set()
         for nodes4 in test_graph.nodes[0].children:
             result4.append(nodes4.mutant_name)
-        self.assertEquals([], result4)
+        self.assertEqual([], result4)
 
     def test_add_relation_for_parents_and_children_with_3_level_graph(self):
         mutant_4 = dominator_mutants.Node({4}, {1, 2, 3, 4})
@@ -534,13 +535,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[1].children = set()
         for nodes in test_graph.nodes[1].children:
             result.append(nodes.mutant_name)
-        self.assertEquals([{1}], result)
+        self.assertEqual([{1}], result)
 
         if test_graph.nodes[1].parents is None:
             test_graph.nodes[1].parents = set()
         for parents in test_graph.nodes[1].parents:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([], result_parent)
+        self.assertEqual([], result_parent)
 
         # mutant 1
         result2 = []
@@ -550,13 +551,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[2].parents = set()
         for parents2 in test_graph.nodes[2].parents:
             result_parent2.append(parents2.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
         if test_graph.nodes[2].children is None:
             test_graph.nodes[2].children = set()
         for nodes2 in test_graph.nodes[2].children:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{4}], result2)
+        self.assertEqual([{4}], result2)
 
         # mutant 4
         result4 = []
@@ -566,13 +567,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[0].parents = set()
         for parents4 in test_graph.nodes[0].parents:
             result_parent4.append(parents4.mutant_name)
-        self.assertEquals([{1}], result_parent4)
+        self.assertEqual([{1}], result_parent4)
 
         if test_graph.nodes[0].children is None:
             test_graph.nodes[0].children = set()
         for nodes4 in test_graph.nodes[0].children:
             result4.append(nodes4.mutant_name)
-        self.assertEquals([], result4)
+        self.assertEqual([], result4)
 
     def test_add_relation_for_parents_and_children_with_3_level_graph_2(self):
         mutant_1 = dominator_mutants.Node({1}, {1, 2})
@@ -595,13 +596,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[0].children = set()
         for nodes in test_graph.nodes[0].children:
             result.append(nodes.mutant_name)
-        self.assertEquals([{1}], result)
+        self.assertEqual([{1}], result)
 
         if test_graph.nodes[0].parents is None:
             test_graph.nodes[0].parents = set()
         for parents in test_graph.nodes[0].parents:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([], result_parent)
+        self.assertEqual([], result_parent)
 
         # mutant 1
         result2 = []
@@ -611,13 +612,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[2].parents = set()
         for parents2 in test_graph.nodes[2].parents:
             result_parent2.append(parents2.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
         if test_graph.nodes[2].children is None:
             test_graph.nodes[2].children = set()
         for nodes2 in test_graph.nodes[2].children:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{4}], result2)
+        self.assertEqual([{4}], result2)
 
         # mutant 4
         result4 = []
@@ -627,13 +628,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[1].parents = set()
         for parents4 in test_graph.nodes[1].parents:
             result_parent4.append(parents4.mutant_name)
-        self.assertEquals([{1}], result_parent4)
+        self.assertEqual([{1}], result_parent4)
 
         if test_graph.nodes[1].children is None:
             test_graph.nodes[1].children = set()
         for nodes4 in test_graph.nodes[1].children:
             result4.append(nodes4.mutant_name)
-        self.assertEquals([], result4)
+        self.assertEqual([], result4)
 
     def test_add_relation_for_parents_and_children_with_4_level_graph(self):
         mutant_6 = dominator_mutants.Node({6}, {1, 2, 3})
@@ -657,13 +658,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[3].children = set()
         for nodes in test_graph.nodes[3].children:
             result.append(nodes.mutant_name)
-        self.assertEquals([{1}], result)
+        self.assertEqual([{1}], result)
 
         if test_graph.nodes[3].parents is None:
             test_graph.nodes[3].parents = set()
         for parents in test_graph.nodes[3].parents:
             result_parent.append(parents.mutant_name)
-        self.assertEquals([], result_parent)
+        self.assertEqual([], result_parent)
 
         # mutant 1
         result2 = []
@@ -673,13 +674,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[2].parents = set()
         for parents2 in test_graph.nodes[2].parents:
             result_parent2.append(parents2.mutant_name)
-        self.assertEquals([{3}], result_parent2)
+        self.assertEqual([{3}], result_parent2)
 
         if test_graph.nodes[2].children is None:
             test_graph.nodes[2].children = set()
         for nodes2 in test_graph.nodes[2].children:
             result2.append(nodes2.mutant_name)
-        self.assertEquals([{6}], result2)
+        self.assertEqual([{6}], result2)
 
         # mutant 6
         result3 = []
@@ -689,13 +690,13 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[0].parents = set()
         for parents3 in test_graph.nodes[0].parents:
             result_parent3.append(parents3.mutant_name)
-        self.assertEquals([{1}], result_parent3)
+        self.assertEqual([{1}], result_parent3)
 
         if test_graph.nodes[0].children is None:
             test_graph.nodes[0].children = set()
         for nodes3 in test_graph.nodes[0].children:
             result3.append(nodes3.mutant_name)
-        self.assertEquals([{4}], result3)
+        self.assertEqual([{4}], result3)
 
         # mutant 4
         result4 = []
@@ -705,37 +706,37 @@ class TestCase(unittest.TestCase):
             test_graph.nodes[1].parents = set()
         for parents4 in test_graph.nodes[1].parents:
             result_parent4.append(parents4.mutant_name)
-        self.assertEquals([{6}], result_parent4)
+        self.assertEqual([{6}], result_parent4)
 
         if test_graph.nodes[1].children is None:
             test_graph.nodes[1].children = set()
         for nodes4 in test_graph.nodes[1].children:
             result4.append(nodes4.mutant_name)
-        self.assertEquals([], result4)
+        self.assertEqual([], result4)
 
     def test_calculate_dominating_mutants_two_mutants(self):
         kill_map = {frozenset({1}): {1, 2}, frozenset({4}): {1, 2, 3, 4}}
         result = dominator_mutants.calculate_dominating_mutants(kill_map)
-        self.assertEquals({frozenset({1})}, result[1])
+        self.assertEqual({frozenset({1})}, result[1])
 
     def test_calculate_dominating_mutants_three_mutants_two_branches(self):
         kill_map = {frozenset({1}): {1, 2}, frozenset({2}): {1, 4},
                     frozenset({4}): {1, 2, 3, 4}}
         result = dominator_mutants.calculate_dominating_mutants(kill_map)
-        self.assertEquals({frozenset({2}), frozenset({1})}, result[1])
+        self.assertEqual({frozenset({2}), frozenset({1})}, result[1])
 
     def test_calculate_dominating_mutants_three_mutants_one_branches(self):
         kill_map = {frozenset({1}): {1, 2}, frozenset({3}): {2},
                     frozenset({4}): {1, 2, 3, 4}}
         result = dominator_mutants.calculate_dominating_mutants(kill_map)
-        self.assertEquals({frozenset({3})}, result[1])
+        self.assertEqual({frozenset({3})}, result[1])
 
     def test_calculate_dominating_mutants_four_mutants_two_branches_2_indistinguishable(
             self):
         kill_map = {frozenset({5}): {1, 4}, frozenset({3}): {2},
                     frozenset({4}): {1, 2, 3, 4}, frozenset({2}): {1, 4}}
         result = dominator_mutants.calculate_dominating_mutants(kill_map)
-        self.assertEquals({frozenset({3}), frozenset({2, 5})}, result[1])
+        self.assertEqual({frozenset({3}), frozenset({2, 5})}, result[1])
 
     def test_calculate_dominating_mutants_five_three_layers_mutants_two_branches_2_indistinguishable(
             self):
@@ -743,7 +744,7 @@ class TestCase(unittest.TestCase):
                     frozenset({5}): {1, 4}, frozenset({2}): {1, 4},
                     frozenset({3}): {2}, frozenset({4}): {1, 2, 3, 4}}
         result = dominator_mutants.calculate_dominating_mutants(kill_map)
-        self.assertEquals({frozenset({3}), frozenset({2, 5})}, result[1])
+        self.assertEqual({frozenset({3}), frozenset({2, 5})}, result[1])
 
     def test_tests_covered(self):
         mutant_6 = dominator_mutants.Node({6}, {1, 2, 3})
@@ -762,7 +763,7 @@ class TestCase(unittest.TestCase):
         # mutant 3
         result = []
 
-        self.assertEquals({1, 2, 3, 4}, test_graph.get_tests_covered(
+        self.assertEqual({1, 2, 3, 4}, test_graph.get_tests_covered(
             test_graph.nodes[3]))
 
     def test_csv_reader(self):
@@ -1241,4 +1242,61 @@ class TestCase(unittest.TestCase):
         result3 = dominator_mutants.generate_dominator_set_with_csv_3_col(
             "test-data/killMap_lang_16.csv")
 
-        self.assertEquals(result2, result3[1])
+        self.assertEqual(result2, result3[1])
+
+    def test_completeness_plot_single_mutant(self):
+        kill_map = {frozenset({1}): {1, 2}}
+        result = test_completeness.generate_test_completeness_plot(kill_map)
+        self.assertEqual([(0, 0), (1, 2)], result)
+
+    def test_completeness_plot_single_parent_single_child(self):
+        kill_map = {frozenset({1}): {1, 2},
+                    frozenset({4}): {1, 2, 3, 4}}
+
+        result = test_completeness.generate_test_completeness_plot(kill_map)
+        self.assertEqual([(0, 0), (1, 4)], result)
+
+    def test_completeness_plot_single_branch_three_mutants(self):
+        kill_map = {frozenset({1}): {1, 2},
+                    frozenset({1}): {1, 2, 3},
+                    frozenset({4}): {1, 2, 3, 4}}
+
+        result = test_completeness.generate_test_completeness_plot(kill_map)
+        self.assertEqual([(0, 0), (1, 4)], result)
+
+    def test_completeness_plot_two_parents_one_child(self):
+        kill_map = {frozenset({1}): {1, 2}, frozenset({2}): {1, 4},
+                    frozenset({4}): {1, 2, 3, 4}}
+        result = test_completeness.generate_test_completeness_plot(kill_map)
+        self.assertEqual([(0, 0), (1, 4), (2, 4)], result)
+
+    def test_completeness_plot_one_parent_two_children(self):
+        kill_map = {frozenset({1}): {1, 2}, frozenset({2}): {1, 4},
+                    frozenset({4}): {1}}
+        result = test_completeness.generate_test_completeness_plot(kill_map)
+        self.assertEqual([(0, 0), (1, 3)], result)
+
+    def test_completeness_plot_two_separate_branches(self):
+        kill_map = {frozenset({1}): {1, 2}, frozenset({2}): {1, 4},
+                    frozenset({4}): {1, 2, 3, 4},
+                    frozenset({6}): {5, 6, 7, 8, 9}}
+        result = test_completeness.generate_test_completeness_plot(kill_map)
+        self.assertEqual([(0, 0), (1, 5), (2, 9), (3, 9)], result)
+
+    def test_completeness_plot_two_separate_branches_with_plotting(self):
+        kill_map = {frozenset({1}): {1, 2}, frozenset({2}): {1, 4},
+                    frozenset({4}): {1, 2, 3, 4},
+                    frozenset({6}): {5, 6, 7, 8, 9}}
+        result = test_completeness.generate_test_completeness_plot(kill_map)
+        self.assertEqual([(0, 0), (1, 5), (2, 9), (3, 9)], result)
+        test_completeness.plot(result)
+
+    def test_generate_test_completeness_plot_with_csv(self):
+        result = test_completeness.generate_test_completeness_plot_from_csv(
+            "test-data/killMap.csv")
+        self.assertEqual(
+            [(0, 0), (1, 13), (2, 18), (3, 19), (4, 20), (5, 21), (6, 22),
+             (7, 23), (8, 24), (9, 25), (10, 26), (11, 27), (12, 28), (13, 28),
+             (14, 28), (15, 28), (16, 28), (17, 28), (18, 28), (19, 28),
+             (20, 28), (21, 28)]
+            , result)
