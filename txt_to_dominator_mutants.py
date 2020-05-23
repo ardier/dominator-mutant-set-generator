@@ -3,7 +3,7 @@ from typing import Optional, Set, Dict
 
 
 class Node:
-    mutant_name: Set[int]
+    mutant_identifier: Set[int]
     children: Set[int]
     parents: Set[int]
     children_string_set: Set[int]
@@ -14,17 +14,17 @@ class Node:
 
     """
 
-    def __init__(self, mutant_name=None, children_string_set=None):
+    def __init__(self, mutant_identifier=None, children_string_set=None):
         """ Initiates node object
 
-        Creates a node that represents mutants. If the mutant_name and/or
-        children_string_set are passed in, it will set self.mutant_name and
+        Creates a node that represents mutants. If the mutant_identifier and/or
+        children_string_set are passed in, it will set self.mutant_identifier and
         self.children_string_set to the values passed in. Otherwise,
         the function initiates them as the empty set (Set[int]).
 
 
         Parameters:
-        mutant_name: set[int]
+        mutant_identifier: set[int]
             The mutant's identifier is stored as a set so that when two
             indistinguishable mutants are merged their name could easily be
             merged (default None)
@@ -33,26 +33,26 @@ class Node:
             represented by this node (default None)
 
         Attributes:
-        self.mutant_name: set[int]
-            The mutant's identifier is stored as a set so that when two
+        self.mutant_identifier: set[int]
+            The mutant's name identifier is stored as a set so that when two
             indistinguishable mutants are merged their name could easily be
             merged (default set[int])
         self.children_string_set: set[int]
             A set of children identifiers for the mutant represented
             by this node (default set[int])
         self.children: set[int]
-            A set of mutant identifiers that represents mutants that are
-            killed by a superset of tests that kill the mutant represented
-            by this node (default set[int]).
+            A set of nodes that are subsumed directly by this node. Children
+            nodes represent mutants that are killed by a superset of tests
+            that also kill this mutant(node). (default set[int])
         self.parents: set[int]
-            A set of mutant identifiers that represents mutants that are
-            killed by a subset of tests that kill the mutant represented by
-            this node (default set[int]).
+            A set of nodes that directly subsume this node. Parent nodes
+            represent mutants that are killed by a subset of tests
+            that also kill this mutant(node). (default set[int])
 
         """
-        if mutant_name == None:
-            mutant_name = set()
-        self.mutant_name = mutant_name
+        if mutant_identifier == None:
+            mutant_identifier = set()
+        self.mutant_identifier = mutant_identifier
         if children_string_set == None:
             children_string_set = set()
         self.children_string_set = children_string_set
@@ -104,7 +104,7 @@ class Graph:
             # match the children by string name and add them
             for child_listed in node.children_string_set:
                 for node2 in self.nodes.copy():
-                    if node2.mutant_name == frozenset({child_listed}):
+                    if node2.mutant_identifier == frozenset({child_listed}):
                         node.children.add(node2)
                         node2.parents.add(node)
 
@@ -134,7 +134,7 @@ class Graph:
         for node in self.nodes:
             if node.parents == set():
                 dominator_mutants_set_actual_mutant.add(node)
-                dominator_mutants_set.add(node.mutant_name)
+                dominator_mutants_set.add(node.mutant_identifier)
         return dominator_mutants_set, dominator_mutants_set_actual_mutant
 
 
@@ -146,9 +146,10 @@ class Graph:
 def import_mutant_relation(txt_file):
     """Imports the subsumpstion relation and mutant to group identifier from txt
 
-        It takes a text file that contains mappings of group name identifiers
-        to mutant names, subsumption relationship between groups of
-        equivalent mutants, and their status after a test (lived/killed).
+        It takes a text file that contains mappings of:
+         - group name identifiers to mutant names
+         - subsumption relationship between groups of equivalent mutants
+         - and their status after a test (lived/killed).
 
         This function uses regular expressions for pattern matching and
         iterates only once over the text file to generate the mappings.
@@ -162,8 +163,8 @@ def import_mutant_relation(txt_file):
         Returns
             (tuple): containing
                 relationships : Dict[frozenset, frozenset]
-                    A mapping from each mutant group identifier to the group
-                    identifiers for the groups that mutant subsumes
+                    A mapping (identifiers -> identifiers) from dominating
+                    mutant groups to the mutant groups they subsume
 
                 group_names : Dict[frozenset, frozenset]
                     A mapping from each mutant group identifier to its mutant

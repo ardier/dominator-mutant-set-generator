@@ -4,54 +4,58 @@ from typing import Set
 
 class Node:
     tests: Set[int]
-    mutant_name: Set[int]
+    mutant_identifier: Set[int]
     children: Set[int]
     parents: Set[int]
     """The node object that represents mutants
-
+        All the functions in this .py file assume that mutants 
+        that are passed in are killable 
+        
     """
 
     def __init__(self, mutant_name=None, tests=None):
         """ Initiates node object
 
-        Creates a node that represents mutants. If the mutant_name and/or
-        tests are passed in, it will set self.mutant_name and self.tests
+        Creates a node that represents mutants. If the mutant_identifier and/or
+        tests are passed in, it will set self.mutant_identifier and self.tests
         to the values passed in. Otherwise, the function initiates them as the
         empty set (Set[int]).
+
+
 
         Additionally, it initiates self.children and self.parents as empty
         sets (Set[int]).
 
         Parameters:
-        mutant_name: set[int]
+        mutant_identifier: set[int]
             The mutant's identifier is stored as a set so that when two
-            indistinguishable mutants are merged their name could easily be
-            merged (default None)
+            indistinguishable mutants are merged their name, they could
+            easily be identifiable (default None).
         tests: set[int]
             A set of test identifiers that fail for the mutant represented
             by this node (default None)
 
         Attributes:
-        self.mutant_name: set[int]
+        self.mutant_identifier: set[int]
             The mutant's identifier is stored as a set so that when two
-            indistinguishable mutants are merged their name could easily be
-            merged (default set[int])
+            indistinguishable mutants are merged their name, they could
+            easily be identifiable (default None).
         self.tests: set[int]
             A set of test identifiers that fail for the mutant represented
             by this node (default set[int])
         self.children: set[int]
-            A set of mutant identifiers that represent mutants that are
-            killed by a superset of tests that kill the mutant represented
-            by this node (default set[int]).
+            A set of nodes that are subsumed directly by this node. Children
+            nodes represent mutants that are killed by a superset of tests
+            that also kill this mutant(node). (default set[int])
         self.parents: set[int]
-            A set of mutant identifiers that represent mutants that are
-            killed by a subset of tests that kill the mutant represented by
-            this node (default set[int]).
+            A set of nodes that directly subsume this node. Parent nodes
+            represent mutants that are killed by a subset of tests
+            that also kill this mutant(node). (default set[int])
 
         """
         if mutant_name is None:
             mutant_name = set()
-        self.mutant_name = mutant_name
+        self.mutant_identifier = mutant_name
         if tests is None:
             tests = set()
         self.tests = tests
@@ -60,11 +64,10 @@ class Node:
 
     def determine_mutant_subsumption(self, new_node, graph):
 
-        """Determines whether new_node's placement compared to this node.
+        """Determines the new_node's placement compared to this node.
 
-        Assumes that the nodes that are passed in are related.
-
-        Checks whether this node and new_node are distinguishable nodes.
+        Assumes that the nodes that are passed in are related and that this
+        node and new_node are distinguishable nodes.
 
         If the nodes are distinguishable, and if the test identifiers in this
         node are a subset of the test identifiers in new_node, it will call
@@ -86,13 +89,20 @@ class Node:
             self.update_subsumed(new_node, graph)
 
     def update_dominant(self, new_node, graph):
-        """Updates the dominant node on the graph with new_node
-        If this node has any children, for any given child of this node, if the
-        child's set of test identifiers is a subset of new_node's set of test
-        identifiers, this function calls determine_mutant_subsumption on the
-        child. Otherwise, add_children_in_between is called on this node.
+        """Updates the dominant node on the graph with new_node.
+
+        Assumes that this node is dominant with respect to the new_node.
+
+        If this node has any children, for any given child of this node,
+        it checks whether the child's set of test identifiers is a subset or
+        superset of new_node's set of test identifiers.
+
+        If child's set of test identifiers is a superset of new_node's test
+        identifiers add_children_in_between is called on this node.
+
         If this node doesn't have any children, the function calls
         add_children on this node.
+
         Parameters:
             new_node: Node
                 A new node representing a mutant that is being added to the the
@@ -129,17 +139,24 @@ class Node:
             self.add_children(new_node)
 
     def update_subsumed(self, new_node, graph):
-        """Updates the subsumed node on the graph with new_node
-        If this node has any parents, for any given child of this node, if the
-        child's set of test identifiers is a superset of new_node's set of test
-        identifiers, this functions calls determine_mutant_subsumption on the
-        parent. Otherwise, add_children_in_between is called on the parent.
-        If this node doesn't have any parents, the function calls
-        add_children on new_node.
-       Parameters:
+        """Updates the subsumed node on the graph with new_node.
+
+        Assumes that this node is subsumed with respect to the new_node.
+
+        If this node has any parents, for any given parent of this node,
+        it checks whether the parent's set of test identifiers is a subset or
+        superset of new_node's set of test identifiers.
+
+        If the parents's set of test identifiers is a subset of new_node's
+        test identifiers add_children_in_between is called on this node.
+
+        If this node doesn't have any children, the function calls
+        add_children on this node.
+
+        Parameters:
             new_node: Node
                 A new node representing a mutant that is being added to the the
-                graph and is dominated by this node
+                graph and is subsumed by this node
             graph: Graph
                 A graph containing nodes that represent mutants
         """
@@ -216,20 +233,20 @@ class Node:
             graph: Graph
                 The graph containing these mutants
         """
-        self.mutant_name = self.mutant_name.union(n2.mutant_name)
+        self.mutant_identifier = self.mutant_identifier.union(
+            n2.mutant_identifier)
 
     def is_distinguishable_from(self, n2):
         """Determines whether two nodes are distinguishable using direct
         comparison and their test identifiers.
-
 
         Parameters:
             n2: Node
                 The mutant being compared to this mutant
 
         Return:
-            True if the this node and n2 represent mutants that are distinguishable;
-            False otherwise.
+            True if the this node and n2 represent mutants that are
+            distinguishable; False otherwise.
         """
 
         return (self != n2) and (self.tests != n2.tests)
@@ -284,7 +301,6 @@ class Graph:
         """
         for n1 in range(0, len(self.nodes)):
 
-            # self.nodes_added.append(self.nodes[n1])
             for n2 in range(0, n1):
 
                 # If at least the set of test identifiers in one of them is
@@ -319,7 +335,7 @@ class Graph:
 
         Parameters:
             node: Node
-                A node on the graph
+                A node on the graph set[int]
 
         Returns:
             tests_covered: set[int]
@@ -361,7 +377,7 @@ def calculate_dominating_mutants(kill_map):
         set of identifiers for tests that kill each mutant.
 
     Returns:
-        (tuple): containing
+        (tuple of three): containing
             graph : Graph
                 The graph containing nodes that represent mutants
             dominator_mutants_set: set[int]
@@ -387,7 +403,7 @@ def calculate_dominating_mutants(kill_map):
     dominator_mutants_set_actual_mutant = list()
     for mutants in graph.nodes:
         if mutants.parents == None or len(mutants.parents) == 0:
-            dominator_mutants_set.add(mutants.mutant_name)
+            dominator_mutants_set.add(mutants.mutant_identifier)
             dominator_mutants_set_actual_mutant.append(mutants)
 
     return graph, dominator_mutants_set, dominator_mutants_set_actual_mutant
