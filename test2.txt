@@ -1,0 +1,22 @@
+TOKREP_GLOBAL(591)<"org.apache.commons.lang3.SystemUtils"> -> "org.apache.commons.lang3.SystemUtils::JAVA_SPECIFICATION_VENDOR"#0.3481356000291167#0.3481356000291167#true#0.3342769026844068#true#false#0.5982142857142857
+TOKREP_GLOBAL(591)<"org.apache.commons.lang3.SystemUtils"> -> "org.apache.commons.lang3.SystemUtils::JAVA_SPECIFICATION_VERSION"#0.3481356000291167#0.3481356000291167#true#0.3342769026844068#true#false#0.5982142857142857
+TOKREP_GLOBAL(591)<"org.apache.commons.lang3.SystemUtils"> -> "org.apache.commons.lang3.SystemUtils::JAVA_UTIL_PREFS_PREFERENCES_FACTORY"#0.3481356000291167#0.3481356000291167#true#0.3342769026844068#true#false#0.5982142857142857
+TOKREP_GLOBAL(591)<"org.apache.commons.lang3.SystemUtils"> -> "org.apache.commons.lang3.SystemUtils::JAVA_VENDOR"#0.3481356000291167#0.3481356000291167#true#0.3342769026844068#true#false#0.5982142857142857
+TOKREP_GLOBAL(591)<"org.apache.commons.lang3.SystemUtils"> -> "org.apache.commons.lang3.SystemUtils::JAVA_VENDOR_URL"#0.3481356000291167#0.3481356000291167#true#0.3342769026844068#true#false#0.5982142857142857
+TOKREP_GLOBAL(591)<"org.apache.commons.lang3.SystemUtils"> -> "org.apache.commons.lang3.SystemUtils::JAVA_VERSION"#0.3481356000291167#0.3481356000291167#true#0.3342769026844068#true#false#0.5982142857142857
+TOKREP_GLOBAL(591)<"org.apache.commons.lang3.SystemUtils"> -> "org.apache.commons.lang3.SystemUtils::JAVA_VM_INFO"#0.3481356000291167#0.3481356000291167#true#0.3342769026844068#true#false#0.5982142857142857
+TOKREP_GLOBAL(591)<"org.apache.commons.lang3.SystemUtils"> -> "org.apache.commons.lang3.SystemUtils::JAVA_VM_NAME"#0.3481356000291167#0.3481356000291167#true#0.3342769026844068#true#false#0.5982142857142857
+TOKREP_GLOBAL(240)<"org.apache.commons.lang3.text.translate.CharSequenceTranslator"> -> "java.lang.String::toLowerCase(java.util.Locale)"#0.005841969576406803#0.005481491579654582#false#0.07325566432311793#false#false#1.321321321321322E-4
+TOKREP_GLOBAL(164)<"org.apache.commons.lang3.tuple.Triple"> -> "org.apache.commons.lang3.tuple::super"#0.026138517084348865#0.4818455517866449#false#0.17782231579993424#true#false#0.061538461538461514
+TOKREP_GLOBAL(169)<"org.apache.commons.lang3.tuple.Triple"> -> "org.apache.commons.lang3.ObjectUtils::notEqual(java.lang.Object,java.lang.Object)"#0.026777500357669588#0.05780405291587365#false#0.20480991979191862#true#false#0.06666666666666667
+TOKREP_GLOBAL(521)<"org.apache.commons.lang3.Range"> -> "org.apache.commons.lang3.Range::containsRange(org.apache.commons.lang3.Range<T>)"#0.01833643456704058#0.01833643456704058#true#0.1577898121187552#true#false#0.4
+TOKREP_GLOBAL(975)<"org.apache.commons.lang3.ObjectUtils"> -> "java.lang.Class::getDeclaredMethod(java.lang.String,java.lang.Class<?>...)"#0.25321534767186155#0.08961433730035545#false#0.02909666553157391#true#false#0.06451612903225806
+TOKREP_LIT(26)<"org.apache.commons.lang3.CharEncoding"> -> "["#0.03661099578459719#0.4119540093592103#true#0.43629953568226726#false#true#0.009999999999999995
+TOKREP_LIT(44)<"org.apache.commons.lang3.ClassUtils"> -> ','#0.10392584687304879#0.002617073081174128#false#0.12070104315754344#false#true#0.14285714285714288
+TOKREP_LIT(44)<"org.apache.commons.lang3.ClassUtils"> -> '\''#0.0834255966261258#0.002617073081174128#false#0.12070104315754344#false#true#0.047619047619047616
+TOKREP_GLOBAL(371)<"org.apache.commons.lang3.concurrent.TimedSemaphore"> -> "org.apache.commons.lang3.concurrent.TimedSemaphore$4::run()"#0.15820239046530915#0.15820239046530915#true#0.12314877341189924#true#false#0.012765957446808515
+TOKREP_LOCAL(192)<"org.apache.commons.lang3.text.translate.CharSequenceTranslator"> -> 117#0.056647041672063365#0.3494245898987827#true#0.06961679583021298#false#true#5.781792911744274E-4
+TOKREP_LIT(164)<"org.apache.commons.lang3.Range"> -> "The Array must not be null"#0.014607778038837456#0.4347032225113461#true#0.3019603686632956#false#true#0.05381165919282511
+TOKREP_LIT(383)<"org.apache.commons.lang3.ClassUtils"> -> '-'#0.2469391779167458#0.25299413049474406#true#0.21833445050801226#false#true#0.6666666666666666
+TOKREP_GLOBAL(12)<"org.apache.commons.lang3.exception.CloneFailedException"> -> "org.apache.commons.lang3.exception.CloneFailedException::serialVersionUID"#2.3781310863929192E-4#0.02261819497529715#true#0.1567014751117623#false#false#7.047099953202866E-6
+TOKREP_LOCAL(98)<"org.apache.commons.lang3.ObjectUtils"> -> 89#4.143491735208638E-4#5.846407913840969E-4#false#0.04409705198134446#false#false#4.814342729381284E-6
