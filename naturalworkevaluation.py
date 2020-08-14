@@ -19,11 +19,12 @@ def generate_natural_work_evaluation(results_dir):
 
     log_file_path = os.path.join(dirpath, "mutants.log")
     mutant_token_sub_mapping: Optional[dict] = \
-        generate_mutant_to_token_mapping(generate_mutant_to_token_mapping(
-            log_file_path))
+        (generate_mutant_to_token_mapping(log_file_path))
 
     # TODO step 4
-
+    mml_file_path = os.path.join(dirpath, "mml_confidence_data.csv")
+    mutant_token_sub_mapping: Optional[dict] = generate_scores(
+        mutant_token_sub_mapping, log_file_path)
 
 def generate_mutant_to_token_mapping(log_file):
     mutant_to_token_mapping: Optional[Dict[int, int[-1, -1]]] = dict()
