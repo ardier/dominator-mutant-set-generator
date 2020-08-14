@@ -24,7 +24,7 @@ def generate_natural_work_evaluation(results_dir):
     # TODO step 4
     mml_file_path = os.path.join(dirpath, "mml_confidence_data.csv")
     mutant_token_sub_mapping: Optional[dict] = generate_scores(
-        mutant_token_sub_mapping, log_file_path)
+        mutant_token_sub_mapping, mml_file_path)
 
 def generate_mutant_to_token_mapping(log_file):
     mutant_to_token_mapping: Optional[Dict[int, int[-1, -1]]] = dict()
@@ -46,8 +46,12 @@ def generate_mutant_to_token_mapping(log_file):
         return mutant_to_token_mapping
 
 
-def generate_scores(mml_csv, mutant_token_mapping):
-    print("placeholder")
+def generate_scores(mutant_token_mapping, mml_csv):
+    with open(mml_csv, 'r') as fo:
+        for line in fo:
+            print(line)
+            continue
+            raise ValueError("No pattern matched line: {}".format(line))
 
 
 if __name__ == "__main__":
