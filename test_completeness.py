@@ -106,8 +106,10 @@ def generate_test_completeness_plot_from_csv(csv_filename):
     """
     kill_map = convert_csv_to_killmap(csv_filename)
     plotted_points = generate_test_completeness_plot(kill_map)
-    plot(plotted_points)
-    return plotted_points
+
+    # todo: update the spec to include this return value
+    plots = plot(plotted_points)
+    return plotted_points, plots
 
 
 def plot(plot):
@@ -122,9 +124,12 @@ def plot(plot):
         data=plot,
         columns=["Work", "Test Completeness"]
     )
-    ax = plotter.plot(x='Work', y='Test Completeness',
-                      xticks=range(len(plot)),
-                      yticks=range(0, plot[(len(plot) - 1)][1], 100),
+    ax = plotter.plot(x='Work', y='Dominator Mutants', fontsize=6,
+                      xticks=(range(0, len(plot), 5)),
+                      yticks=range(0, plot[(len(plot) - 1)][1], 25),
                       legend=False)
     ax.set_ylabel("Test Completeness")
-    plt.show()
+    # plt.savefig("images/111.png")
+    # plt.show()
+
+    return plt
