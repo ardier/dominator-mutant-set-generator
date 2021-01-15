@@ -1,10 +1,13 @@
 from unittest import TestCase
 
+# TODO achieve %100 code coverage
+import naturalworkevaluation
+
 
 # TODO use test.txt and test2.txt for tests
 
-# TODO achieve %100 code coverage
 
 class Test(TestCase):
-    def test_generate_eval_plot(self):
-        self.fail()
+    def test_traditional_naturalness(self):
+        print(naturalworkevaluation.plot_traditional_naturalness(
+            "..\\Pojo\\Lang\\1\\killmatrix"))
